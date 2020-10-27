@@ -1,5 +1,4 @@
 import btoandav20
-import os
 import backtrader as bt
 from __config__ import (IS_PRACTICE_ACCT, OANDA_API_KEY, OANDA_ACCOUNT, PAIR, BAR_TIMEFRAME, BAR_COMPRESSION)
 import strategies
@@ -22,11 +21,11 @@ def run_strategy():
 
     broker = BrokerCls(**brokerkwargs)
     cerebro.setbroker(broker)
-    timeframe = bt.TimeFrame.TFrame('Minutes')  ## This is what we need to load TICK data from Oanda. I have no idea why 'Ticks' breaks it, but 'Minutes' pulls tick data.
+    timeframe = bt.TimeFrame.TFrame('Minutes')  # This is what we need to load TICK data from Oanda. I have no idea why 'Ticks' breaks it, but 'Minutes' pulls tick data.
 
     datakwargs = dict(
         timeframe = timeframe, 
-        compression = 1,          # Bar Duration - DO NOT CHANGE!  If resampling of Ticks is needed, modify that in the resmple function below.
+        compression = 1,          # Bar Duration - DO NOT CHANGE!  If resampling of Ticks is needed, modify that in the resample function below (values pulled form __config__.py file).
         qcheck = 0.5,             # Timeout for periodic notification/resampling/replaying check
         # historical=args.historical,
         # fromdate=fromdate,
