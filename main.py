@@ -1,6 +1,8 @@
 import btoandav20
+import os
 import backtrader as bt
-from __config__ import (IS_PRACTICE_ACCT, OANDA_API_KEY, OANDA_ACCOUNT)
+from __config__ import (IS_PRACTICE_ACCT, OANDA_API_KEY, OANDA_ACCOUNT, PAIR, BAR_TIMEFRAME, BAR_COMPRESSION)
+import strategies
 
 
 StoreCls = btoandav20.stores.OandaV20Store
@@ -8,73 +10,49 @@ DataCls = btoandav20.feeds.OandaV20Data
 BrokerCls = btoandav20.brokers.OandaV20Broker
 
 
-
-
-
-
-class PrintPrices(bt.Strategy):
-    print('ran')
-    def log(self, txt, dt=None):
-        dt = dt or self.datas[0].datetime.datetime(0) 
-        print('%s, %s' % (dt.isoformat(), txt))
-    def __init__(self):
-        self.databid = self.datas[0].low
-        self.dataask = self.datas[0].high
-        print(self.datas[0])
-    def next(self):
-        self.log('Bid, %.5f' % self.databid[0])
-        self.log('Ask, %.5f' % self.dataask[0])
-
-
-
-
-
 def run_strategy():
 
     cerebro = bt.Cerebro()
 
-    storekwargs = dict(
+    brokerkwargs = dict(
         token=OANDA_API_KEY,
         account=OANDA_ACCOUNT,
         practice=IS_PRACTICE_ACCT
     )
 
-    broker = BrokerCls(**storekwargs)
+    broker = BrokerCls(**brokerkwargs)
     cerebro.setbroker(broker)
-
-    timeframe = bt.TimeFrame.TFrame('Minutes')
-    # print(dir(bt.TimeFrame))
-    print(timeframe)
+    timeframe = bt.TimeFrame.TFrame('Minutes')  ## This is what we need to load TICK data from Oanda. I have no idea why 'Ticks' breaks it, but 'Minutes' pulls tick data.
 
     datakwargs = dict(
-        timeframe=timeframe, 
-        compression=1,          # Bar Duration
-        qcheck=0.5,             # Timeout for periodic notification/resampling/replaying check
+        timeframe = timeframe, 
+        compression = 1,          # Bar Duration - DO NOT CHANGE!  If resampling of Ticks is needed, modify that in the resmple function below.
+        qcheck = 0.5,             # Timeout for periodic notification/resampling/replaying check
         # historical=args.historical,
         # fromdate=fromdate,
         # bidask=args.bidask,
         # useask=args.useask,
-        backfill_start=True,   # Disable backfilling at the start,
-        backfill=True,
+        backfill_start = False,   # Disable backfilling at the start,
+        backfill = False,         # Doesnt appear to matter if this is True or False
         bidask = True,
         reconnect = True, 
         reconntimeout = 10
     )
 
     DataFactory = DataCls
-    data0 = DataFactory(dataname="EUR_USD", **datakwargs)
-    # cerebro.adddata(data0)
+    data0 = DataFactory(dataname=PAIR, **datakwargs)
 
-    cerebro.replaydata(data0, timeframe=bt.TimeFrame.Seconds, compression=5)
+    if BAR_TIMEFRAME == 'Ticks':
+        cerebro.replaydata(data0)
+    else :
+        cerebro.resampledata(data0, timeframe=bt.TimeFrame.TFrame(BAR_TIMEFRAME), compression=BAR_COMPRESSION) 
 
-    cerebro.addstrategy(PrintPrices)
-
+    cerebro.addstrategy(strategies.PrintPrices)
 
     # Set Account / Broker Data
     # cerebro.broker.setcash(cash)
     # cerebro.broker.setcommission(commission=0.0000, leverage=50)
     # cerebro.addsizer(bt.sizers.FixedSize, stake=pos_size)
-
 
     cerebro.run()
 
@@ -82,6 +60,3 @@ def run_strategy():
 
 if __name__ == '__main__':
     run_strategy()
-
-
-    print('Finished Running')
