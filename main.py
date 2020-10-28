@@ -31,7 +31,7 @@ def run_strategy():
         # fromdate=fromdate,
         # bidask=args.bidask,
         # useask=args.useask,
-        backfill_start = False,   # Disable backfilling at the start,
+        backfill_start = True,   # Disable backfilling at the start,
         backfill = False,         # Doesnt appear to matter if this is True or False
         bidask = True,
         reconnect = True, 
