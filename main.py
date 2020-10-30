@@ -1,13 +1,15 @@
 import btoandav20
 import backtrader as bt
-from __config__ import (IS_PRACTICE_ACCT, OANDA_API_KEY, OANDA_ACCOUNT, PAIR, BAR_TIMEFRAME, BAR_COMPRESSION)
 import strategies
+import requests
+from __config__ import (IS_PRACTICE_ACCT, OANDA_API_KEY, OANDA_ACCOUNT, PAIR, BAR_TIMEFRAME, BAR_COMPRESSION)
 
 
 StoreCls = btoandav20.stores.OandaV20Store
 DataCls = btoandav20.feeds.OandaV20Data
 BrokerCls = btoandav20.brokers.OandaV20Broker
 
+# print(dir(bt))
 
 def run_strategy():
 
@@ -31,11 +33,12 @@ def run_strategy():
         # fromdate=fromdate,
         # bidask=args.bidask,
         # useask=args.useask,
-        backfill_start = True,   # Disable backfilling at the start,
+        backfill_start = True,    # Disable/Enable backfilling at the start
         backfill = False,         # Doesnt appear to matter if this is True or False
         bidask = True,
         reconnect = True, 
-        reconntimeout = 10
+        reconnections = -1,
+        reconntimeout = 5.0
     )
 
     DataFactory = DataCls
@@ -46,12 +49,17 @@ def run_strategy():
     else :
         cerebro.resampledata(data0, timeframe=bt.TimeFrame.TFrame(BAR_TIMEFRAME), compression=BAR_COMPRESSION) 
 
-    cerebro.addstrategy(strategies.PrintPrices)
 
-    # Set Account / Broker Data
-    # cerebro.broker.setcash(cash)
-    # cerebro.broker.setcommission(commission=0.0000, leverage=50)
-    # cerebro.addsizer(bt.sizers.FixedSize, stake=pos_size)
+    # cerebro.addstrategy(strategies.PrintPrices)
+    cerebro.addstrategy(strategies.RSITest)
+
+    # acc_cash = broker.getcash()
+    # acc_val = broker.getvalue()
+    # print('Account Cash = {}'.format(acc_cash))
+    # print('Account Value = {}'.format(acc_val))
+
+    pos_size = 10000
+    cerebro.addsizer(bt.sizers.FixedSize, stake=pos_size)
 
     cerebro.run()
 
