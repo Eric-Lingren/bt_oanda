@@ -6,7 +6,8 @@ class RSITest(bt.Strategy):
         ('profit_target', 10),
         ('loss_target', 10),
         ('rsiperiod', 21),
-        ('rsi_limit', 70),
+        ('rsi_lower_limit', 30),
+        ('rsi_upper_limit', 70),
         ('momentumperiod', 20 )
     )
 
@@ -27,7 +28,6 @@ class RSITest(bt.Strategy):
 
         # Add indicators
         self.rsi = bt.indicators.RSI_SMA(self.datas[0], period=self.params.rsiperiod)
-        self.momentum = bt.indicators.Momentum(self.datas[0], period=self.params.momentumperiod)
 
 
     def notify_order(self, order):
@@ -62,10 +62,10 @@ class RSITest(bt.Strategy):
     def next(self):
         # Simply log the closing price of the series from the reference
         # print('\n')
-        # self.log('ASK, %.5f' % self.dataask[0])
-        # self.log('BID, %.5f' % self.databid[0])
+        # print('here')
+        self.log('ASK, %.5f' % self.dataask[0])
+        self.log('BID, %.5f' % self.databid[0])
         # self.log('RSI, %.2f' % self.rsi[0])
-        # self.log('Momentum, %.5f' % self.momentum[0])
 
         # If an order is pending, break function since we cant send a 2nd one
         if self.order:
@@ -74,20 +74,30 @@ class RSITest(bt.Strategy):
         # Check if we are in the market
         if not self.position:
             # Check Buy
-            if self.rsi[0] < 30:
+            if self.rsi[0] < self.params.rsi_lower_limit:
                 if (self.dataask[-2] >= self.dataask[-1]) and (self.dataask[-1] >= self.dataask[0]):
                     self.order = self.buy()
                     self.log('New BUY CREATE, %.5f' % self.dataask[0])
             # Check Sell 
-            if self.rsi[0] > self.params.rsi_limit:
+            if self.rsi[0] > self.params.rsi_upper_limit:
                 if (self.dataask[-2] <= self.dataask[-1]) and (self.dataask[-1] <= self.dataask[0]):
                     self.order = self.sell()
                     self.log('New Sell CREATE, %.5f' % self.dataask[0])
 
         else:
             order_value = self.position.price*self.position.size
-            current_value = self.dataask[0]*self.position.size
+            current_value = None
 
-            if (current_value - order_value > self.params.profit_target) or (current_value - order_value < -self.params.loss_target):
+            # if self.position.size > 0:
+            #     print('in a long position')
+            # elif self.position.size < 0:
+            #     print('in a short position')
+
+            current_value = self.dataask[0]*self.position.size
+            position_profit = current_value - order_value
+            self.log('Position Equity: %.2f' % position_profit)
+            print('\n')
+
+            if (position_profit >= self.params.profit_target) or (position_profit <= -self.params.loss_target):
                 self.log('Closing order, %.5f' % self.dataask[0])
                 self.order = self.close()

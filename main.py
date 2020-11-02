@@ -1,7 +1,7 @@
 import btoandav20
 import backtrader as bt
 import strategies
-import requests
+# import requests
 from __config__ import (IS_PRACTICE_ACCT, OANDA_API_KEY, OANDA_ACCOUNT, PAIR, BAR_TIMEFRAME, BAR_COMPRESSION)
 
 
