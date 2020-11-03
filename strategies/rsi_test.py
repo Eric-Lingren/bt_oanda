@@ -1,7 +1,7 @@
 import backtrader as bt
 
 class RSITest(bt.Strategy):
-    print('TEST Strategy Running')
+    print('RSI TEST Strategy Running')
     params = (
         ('profit_target', 10),
         ('loss_target', 10),
