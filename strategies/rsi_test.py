@@ -1,7 +1,7 @@
 import backtrader as bt
 
 class RSITest(bt.Strategy):
-    print('TEST Stratgey Running')
+    print('TEST Strategy Running')
     params = (
         ('profit_target', 10),
         ('loss_target', 10),
@@ -15,6 +15,9 @@ class RSITest(bt.Strategy):
         ''' Logging function for this strategy'''
         dt = dt or self.datas[0].datetime.datetime(0)
         print('%s, %s' % (dt.isoformat(), txt))
+        with open("test.txt", "a") as file:
+            file.write('%s, %s' % (dt.isoformat(), txt))
+            file.write('\n')
 
     def __init__(self):
         # Keep a reference to the prices line in the data[0] dataseries
