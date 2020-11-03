@@ -1,24 +1,32 @@
 import btoandav20
 import backtrader as bt
 import strategies
-# import requests
-from __config__ import (IS_PRACTICE_ACCT, OANDA_API_KEY, OANDA_ACCOUNT, PAIR, BAR_TIMEFRAME, BAR_COMPRESSION)
+import argparse
 
 
 StoreCls = btoandav20.stores.OandaV20Store
 DataCls = btoandav20.feeds.OandaV20Data
 BrokerCls = btoandav20.brokers.OandaV20Broker
 
-# print(dir(bt))
+# Timeframes available for oanda
+TIMEFRAMES = [
+                bt.TimeFrame.Names[bt.TimeFrame.Ticks],
+                bt.TimeFrame.Names[bt.TimeFrame.Seconds],
+                bt.TimeFrame.Names[bt.TimeFrame.Minutes],
+                bt.TimeFrame.Names[bt.TimeFrame.Days],
+                bt.TimeFrame.Names[bt.TimeFrame.Weeks],
+                bt.TimeFrame.Names[bt.TimeFrame.Months]
+            ]
+
 
 def run_strategy():
-
+    args = parse_args()
     cerebro = bt.Cerebro()
 
     brokerkwargs = dict(
-        token=OANDA_API_KEY,
-        account=OANDA_ACCOUNT,
-        practice=IS_PRACTICE_ACCT
+        token = args.token,
+        account = args.account,
+        practice = not args.live
     )
 
     broker = BrokerCls(**brokerkwargs)
@@ -34,7 +42,7 @@ def run_strategy():
         # bidask=args.bidask,
         # useask=args.useask,
         backfill_start = True,    # Disable/Enable backfilling at the start
-        backfill = False,         # Perform backfilling after a disconnection/reconnection cycle
+        backfill = True,         # Perform backfilling after a disconnection/reconnection cycle
         bidask = True,
         reconnect = True, 
         reconnections = -1,
@@ -42,27 +50,57 @@ def run_strategy():
     )
 
     DataFactory = DataCls
-    data0 = DataFactory(dataname=PAIR, **datakwargs)
+    data0 = DataFactory(dataname=args.data0, **datakwargs)
 
-    if BAR_TIMEFRAME == 'Ticks':
+    if args.timeframe == 'Ticks': # This block is not currently working anymore
         cerebro.replaydata(data0)
     else :
-        cerebro.resampledata(data0, timeframe=bt.TimeFrame.TFrame(BAR_TIMEFRAME), compression=BAR_COMPRESSION) 
+        cerebro.resampledata(data0, timeframe=bt.TimeFrame.TFrame(args.timeframe), compression=args.compression) 
 
 
     # cerebro.addstrategy(strategies.PrintPrices)
     cerebro.addstrategy(strategies.RSITest)
-
-    # acc_cash = broker.getcash()
-    # acc_val = broker.getvalue()
-    # print('Account Cash = {}'.format(acc_cash))
-    # print('Account Value = {}'.format(acc_val))
 
     pos_size = 10000
     cerebro.addsizer(bt.sizers.FixedSize, stake=pos_size)
 
     cerebro.run()
 
+
+def parse_args(pargs=None):
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Test Oanda v20 integration')
+
+    parser.add_argument('--account', default=None,
+                        required=True, action='store',
+                        help='Account identifier to use')
+    
+    parser.add_argument('--compression', default=1, type=int,
+                        required=False, action='store',
+                        help='Compression for Resample/Replay')
+
+    parser.add_argument('--data0', default=None,
+                        required=True, action='store',
+                        help='data 0 into the system')
+    
+    parser.add_argument('--live', default=None,
+                        required=False, action='store',
+                        help='Go to live server rather than practice')
+    
+    parser.add_argument('--timeframe', default=TIMEFRAMES[2],
+                        choices=TIMEFRAMES,
+                        required=False, action='store',
+                        help='TimeFrame for Resample/Replay')
+    
+    parser.add_argument('--token', default=None,
+                        required=True, action='store',
+                        help='Access token to use')
+
+    if pargs is not None:
+        return parser.parse_args(pargs)
+
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
