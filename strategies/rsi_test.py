@@ -39,21 +39,18 @@ class RSITest(bt.Strategy):
             return
 
         # Check if an order has been completed
-        # Attention: broker could reject order if not enough cash
         if order.status in [order.Completed]:
             if order.isbuy():                
-                self.log(
-                    'BUY EXECUTED, Price: %.5f, Cost: %.5f, Comm %.5f' %
-                    (order.executed.price,
-                    order.executed.value,
-                    order.executed.comm))
-
+                self.log('BUY ORDER EXECUTED, Price: %.5f ' % order.executed.price)
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
+            elif order.issell():
+                self.log('SELL ORDER EXECUTED, %.2f' % order.executed.price)
+                self.sellprice = order.executed.price
+                self.sellcomm = order.executed.comm
             self.bar_executed = len(self)
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             self.log('Order Canceled/Margin/Rejected')
-
         self.order = None
 
 
@@ -67,34 +64,30 @@ class RSITest(bt.Strategy):
 
 
     def next(self):
-        # Simply log the closing price of the series from the reference
-        # print('\n')
-        # print('here')
         self.log('ASK, %.5f' % self.dataask[0])
-        self.log('BID, %.5f' % self.databid[0])
+        # self.log('BID, %.5f' % self.databid[0])
         # self.log('RSI, %.2f' % self.rsi[0])
 
-        # If we are not running on live data, break function
+        # Prevent trading if we are not running on live data
         if self.datastatus != 'LIVE':
             return
 
-        # If an order is pending, break function since we dont want to send a second one
+        # Prevent trading if an order is already pending
         if self.order:
             return
 
         # Check if we are in the market
         if not self.position:
-            # Check Buy
+            # Check for Long signal
             if self.rsi[0] < self.params.rsi_lower_limit:
                 if (self.dataask[-2] >= self.dataask[-1]) and (self.dataask[-1] >= self.dataask[0]):
                     self.order = self.buy()
-                    self.log('New BUY CREATE, %.5f' % self.dataask[0])
-            # Check Sell 
+                    self.log('New Buy Order Created, %.5f' % self.dataask[0])
+            # Check for Short signal
             if self.rsi[0] > self.params.rsi_upper_limit:
                 if (self.dataask[-2] <= self.dataask[-1]) and (self.dataask[-1] <= self.dataask[0]):
                     self.order = self.sell()
-                    self.log('New Sell CREATE, %.5f' % self.dataask[0])
-
+                    self.log('New Sell Order Created, %.5f' % self.dataask[0])
         else:
             order_value = self.position.price*self.position.size
             current_value = None
