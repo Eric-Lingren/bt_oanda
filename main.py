@@ -42,7 +42,7 @@ def run_strategy():
         # bidask=args.bidask,
         # useask=args.useask,
         backfill_start = True,    # Disable/Enable backfilling at the start
-        backfill = True,         # Perform backfilling after a disconnection/reconnection cycle
+        backfill = True,          # Perform backfilling after a disconnection/reconnection cycle
         bidask = True,
         reconnect = True, 
         reconnections = -1,
