@@ -15,9 +15,9 @@ class RSITest(bt.Strategy):
         ''' Logging function for this strategy'''
         dt = dt or self.datas[0].datetime.datetime(0)
         print('%s, %s' % (dt.isoformat(), txt))
-        with open("test.txt", "a") as file:
-            file.write('%s, %s' % (dt.isoformat(), txt))
-            file.write('\n')
+        # with open("test.txt", "a") as file:
+        #     file.write('%s, %s' % (dt.isoformat(), txt))
+        #     file.write('\n')
 
     def __init__(self):
         # Keep a reference to the prices line in the data[0] dataseries
@@ -62,6 +62,10 @@ class RSITest(bt.Strategy):
             self.log( 'OPERATION PROFIT, GROSS %.5f, NET %.5f' % (trade.pnl, trade.pnlcomm) )
 
 
+    def notify_data(self, data, status):
+        self.datastatus = data._getstatusname(status)
+
+
     def next(self):
         # Simply log the closing price of the series from the reference
         # print('\n')
@@ -70,7 +74,11 @@ class RSITest(bt.Strategy):
         self.log('BID, %.5f' % self.databid[0])
         # self.log('RSI, %.2f' % self.rsi[0])
 
-        # If an order is pending, break function since we cant send a 2nd one
+        # If we are not running on live data, break function
+        if self.datastatus != 'LIVE':
+            return
+
+        # If an order is pending, break function since we dont want to send a second one
         if self.order:
             return
 
