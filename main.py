@@ -42,7 +42,7 @@ def run_strategy():
         # bidask=args.bidask,
         # useask=args.useask,
         backfill_start = True,    # Disable/Enable backfilling at the start
-        backfill = True,          # Perform backfilling after a disconnection/reconnection cycle
+        backfill = False,         # Perform backfilling after a disconnection/reconnection cycle
         bidask = True,
         reconnect = True, 
         reconnections = -1,
@@ -57,14 +57,15 @@ def run_strategy():
     else :
         cerebro.resampledata(data0, timeframe=bt.TimeFrame.TFrame(args.timeframe), compression=args.compression) 
 
-
     # cerebro.addstrategy(strategies.PrintPrices)
-    cerebro.addstrategy(strategies.RSITest)
+    # cerebro.addstrategy(strategies.RSITest, pair=args.data0)
+    cerebro.addstrategy(strategies.RiseFallPrices, pair=args.data0)
 
     pos_size = 10000
     cerebro.addsizer(bt.sizers.FixedSize, stake=pos_size)
 
     cerebro.run()
+
 
 
 def parse_args(pargs=None):
@@ -101,6 +102,7 @@ def parse_args(pargs=None):
         return parser.parse_args(pargs)
 
     return parser.parse_args()
+
 
 
 if __name__ == '__main__':
